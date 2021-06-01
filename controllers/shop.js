@@ -3,15 +3,21 @@ const Cart = require('../models/cart');
 
 exports.getProducts = (req, res, next) => {
     
-    Product.fetchAllProducts(products => {
+    Product.fetchAllProducts()
+            .then(([rows]) => {
 
-        res.render('shop/product-list', 
+               console.log(rows);
+               
+               res.render('shop/product-list', 
                 {
-                    prods: products, 
+                    prods: rows, 
                     docTitle: 'All Products', 
                     path: "/procuts"
                 }); 
-    });
+            })
+            .catch( err => {
+                console.log("Data base error - Prodcuts not found");
+            });
 };
 
 exports.getProduct = (req, res, next) => {
@@ -30,15 +36,21 @@ exports.getProduct = (req, res, next) => {
 
 exports.getIndex = (req, res, next) => {
 
-    Product.fetchAllProducts(products => {
+    Product.fetchAllProducts()
+            .then(([rows]) => {
 
-        res.render('shop/index', 
+               console.log(rows);
+               
+                res.render('shop/index', 
                 {
-                    prods: products, 
+                    prods: rows, 
                     docTitle: 'Shop', 
                     path: "/"
                 }); 
-    });
+            })
+            .catch( err => {
+                console.log("Data base error - Prodcuts not found");
+            });
 };
 
 exports.getCart = (req, res, next) => {
