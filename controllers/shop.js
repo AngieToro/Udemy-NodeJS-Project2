@@ -1,56 +1,113 @@
+//const Product = require('../models/productsMySQL');
 const Product = require('../models/products');
 const Cart = require('../models/cart');
 
 exports.getProducts = (req, res, next) => {
-    
-    Product.fetchAllProducts()
-            .then(([rows]) => {
 
-               console.log(rows);
-               
+    Product.findAll()
+    .then(products => {
+        res.render('shop/product-list', 
+        {
+            prods: products, 
+            docTitle: 'All Products', 
+            path: "/procuts"
+        }); 
+    })
+    .catch(err => {
+        console.log("Data base error - Prodcuts not found", err);
+    });
+    
+    /* Product.fetchAllProducts()
+            .then(([products]) => {
+             
                res.render('shop/product-list', 
                 {
-                    prods: rows, 
+                    prods: products, 
                     docTitle: 'All Products', 
                     path: "/procuts"
                 }); 
             })
             .catch( err => {
-                console.log("Data base error - Prodcuts not found");
-            });
+                console.log("Data base error - Prodcuts not found", err);
+            }); */
 };
 
 exports.getProduct = (req, res, next) => {
 
     const prodId = req.params.productId;
-    Product.findProductById(prodId, product => {
+    
+    Product.findAll({ where: { id : prodId } })
+            .then(product => {
 
-        res.render('shop/product-detail', 
-                    {
-                        product: product,
-                        docTitle: 'Product Detail - ' + product.title,
-                        path: '/products'
-                    });
-    });
+                res.render('shop/product-detail', 
+                {
+                    product: product[0],
+                    docTitle: 'Product Detail - ' + product[0].title,
+                    path: '/products'
+                });
+            })
+            .catch(err => {
+                console.log('Data base error - Product detail not found', err);
+            });
+
+
+    /* Product.findByPk(prodId)
+            .then((product) => {
+
+                res.render('shop/product-detail', 
+                {
+                    product: product,
+                    docTitle: 'Product Detail - ' + product.title,
+                    path: '/products'
+                });
+            })
+            .catch(err => {
+                console.log('Data base error - Product detail not found', err);
+            }); */
+
+    /* Product.findProductById(prodId)
+            .then(([product]) => {
+
+                res.render('shop/product-detail', 
+                {
+                    product: product[0],
+                    docTitle: 'Product Detail - ' + product.title,
+                    path: '/products'
+                });
+            })
+            .catch(err => {
+                console.log('Data base error - Product detail not found', err);
+            }); */
 };
 
 exports.getIndex = (req, res, next) => {
 
-    Product.fetchAllProducts()
-            .then(([rows]) => {
-
-               console.log(rows);
-               
+    Product.findAll()
+            .then(products => {
                 res.render('shop/index', 
                 {
-                    prods: rows, 
+                    prods: products, 
+                    docTitle: 'Shop', 
+                    path: "/"
+                }); 
+            })
+            .catch(err => {
+                console.log("Data base error - Prodcuts not found", err);
+            });
+
+    /* Product.fetchAllProducts()
+            .then(([products]) => {
+             
+                res.render('shop/index', 
+                {
+                    prods: products, 
                     docTitle: 'Shop', 
                     path: "/"
                 }); 
             })
             .catch( err => {
                 console.log("Data base error - Prodcuts not found");
-            });
+            }); */
 };
 
 exports.getCart = (req, res, next) => {

@@ -1,3 +1,4 @@
+//const Product = require('../models/productsMySQL');
 const Product = require('../models/products');
 
 
@@ -17,9 +18,30 @@ exports.postAddProduct =  (req, res, next) => {
     const imageUrl = req.body.imageUrl;
     const description = req.body.description;
     const price = req.body.price;
-    const product = new Product(null, title, imageUrl, description, price);
-    product.save();
-    res.redirect("/");
+    Product.create({
+
+        title: title,
+        description: description,
+        price: price,
+        imageUrl: imageUrl
+    })
+    .then(result => {
+        console.log("Created Product");
+    })
+    .catch(err => {
+        console.log("Database error - Product not created", err);
+    });
+
+    /* const product = new Product(null, title, imageUrl, description, price);
+    product.save()
+            .then(() => {
+
+                res.redirect("/");
+            })
+            .catch(err => {
+                
+                console.log("Database error - Prodcuts not created", err);
+            }); */
 };
 
 exports.getEditProduct = (req, res, next) => {
@@ -63,7 +85,20 @@ exports.postEditProducts = (req, res, next) => {
 
 exports.getProducts = (req, res, next) => {
 
-    Product.fetchAllProducts(products => {
+    Product.findAll()
+            .then(products => {
+                res.render('admin/products', 
+                {
+                    prods: products, 
+                    docTitle: 'Admin Products', 
+                    path: "/admin/products"
+                }); 
+            })
+            .catch(err => {
+                console.log("Database error - Prodcuts not found", err);
+            });
+
+    /* Product.fetchAllProducts(products => {
 
         res.render('admin/products', 
                 {
@@ -71,14 +106,13 @@ exports.getProducts = (req, res, next) => {
                     docTitle: 'Admin Products', 
                     path: "/admin/products"
                 }); 
-    });
+    }); */
 
 };
 
 exports.postDeteleProduct = (req, res, next) => {
 
     const prodId = req.body.productId;
-    console.log("delete id= ", prodId);
     Product.deleteById(prodId);
     res.redirect("/admin/products");
 };

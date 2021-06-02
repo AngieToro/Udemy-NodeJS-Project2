@@ -5,9 +5,10 @@ const path = require('path');
 const adminRoutes = require('./routes/admin');
 const shopRoutes = require('./routes/shop');
 const errorController = require('./controllers/error');
-
-//const database = require('./util/database');
 const { deleteById } = require('./models/products');
+
+//const database = require('./util/databaseMySQL');
+const sequelize = require('./util/database');
 
 const appExpress = express();
 
@@ -35,4 +36,14 @@ appExpress.use('/admin', adminRoutes);
 appExpress.use(shopRoutes);
 appExpress.use(errorController.get404Error);
 
-appExpress.listen(3000);
+//Sequelize
+//sync with the database
+sequelize.sync()
+        .then(result => {
+
+            appExpress.listen(3000);
+        })
+        .catch(err => {
+
+            console.log("Database connection failed", err);
+        });
