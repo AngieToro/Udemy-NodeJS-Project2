@@ -5,10 +5,12 @@ const path = require('path');
 const adminRoutes = require('./routes/admin');
 const shopRoutes = require('./routes/shop');
 const errorController = require('./controllers/error');
-const { deleteById } = require('./models/products');
+const { deleteById } = require('./models/productsMySQL');
 
 //const database = require('./util/databaseMySQL');
 const sequelize = require('./util/database');
+const Product = require('./models/products');
+const User = require('./models/user');
 
 const appExpress = express();
 
@@ -31,16 +33,42 @@ appExpress.set('views','views'); //the firts parameter is the folder default, th
 appExpress.use(boydParser.urlencoded({extended: false}));
 appExpress.use(express.static(path.join(__dirname, 'public'))); //access to the public folder 
 
+
+appExpress.use((req, res, next) => {
+    User.findByPk(1)
+        .then(user => {
+            req.user = user;
+            next();
+        })
+        .catch(err => {
+            console.log("Error database - No user found", err);
+        });
+});
+
+
 //middleware project
 appExpress.use('/admin', adminRoutes);
 appExpress.use(shopRoutes);
 appExpress.use(errorController.get404Error);
 
 //Sequelize
+Product.belongsTo(User, { constraints: true, onDelete: 'CASCADE' }); //user who create the product 
+User.hasMany(Product);
 //sync with the database
+//.sync({force: true}) //force true can to recreate the tables with the relationships
 sequelize.sync()
         .then(result => {
 
+           return User.findByPk(1);
+        })
+        .then(user => {
+            if (!user){
+
+                return User.create({ name: 'Angelica', email: 'test@test.com'});
+            }
+            return user;
+        })
+        .then(user => {
             appExpress.listen(3000);
         })
         .catch(err => {

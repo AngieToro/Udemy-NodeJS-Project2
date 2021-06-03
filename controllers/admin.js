@@ -26,7 +26,7 @@ exports.postAddProduct =  (req, res, next) => {
         imageUrl: imageUrl
     })
     .then(result => {
-        console.log("Created Product");
+        res.redirect("/admin/products");
     })
     .catch(err => {
         console.log("Database error - Product not created", err);
@@ -53,8 +53,27 @@ exports.getEditProduct = (req, res, next) => {
     };
 
     const prodId = req.params.productId;
+    
+    Product.findByPk(prodId)
+            .then((product) => {
+
+                if (!product){
+                    return res.redirect('/');
+                };
+        
+                res.render('admin/edit-product',
+                        {
+                            docTitle: 'Edit Product', 
+                            path: '/admin/edit-product',
+                            editing: editMode,
+                            product: product
+                        });
+            })
+            .catch(err => {
+                console.log("Database error - Update product has failed");
+            });
  
-    Product.findProductById(prodId, (product) => {
+   /*  Product.findProductById(prodId, (product) => {
         
         if (!product){
             return res.redirect('/');
@@ -67,7 +86,7 @@ exports.getEditProduct = (req, res, next) => {
                     editing: editMode,
                     product: product
                 });
-    });
+    }); */
 };
 
 exports.postEditProducts = (req, res, next) => {
@@ -78,9 +97,28 @@ exports.postEditProducts = (req, res, next) => {
     const updatedImageUrl = req.body.imageUrl;
     const updatedDescription = req.body.description;
     const updatedPrice = req.body.price;
-    const updatedProduct = new Product(prodId, updatedTitle, updatedImageUrl, updatedDescription, updatedPrice);
+
+    Product.findByPk(prodId)
+    .then((product) => {
+
+        product.title = updatedTitle;
+        product.description = updatedDescription;
+        product.price = updatedPrice;
+        product.imageUrl = updatedImageUrl;
+        return product.save();
+    })
+    .then(result => {
+        res.redirect("/admin/products");
+    })
+    .catch(err => {
+        console.log("Database error - Update product has failed", err);
+    });
+
+
+    /* const updatedProduct = new Product(prodId, updatedTitle, updatedImageUrl, updatedDescription, updatedPrice);
     updatedProduct.save();
-    res.redirect("/admin/products");
+    res.redirect("/admin/products"); */
+    
 };
 
 exports.getProducts = (req, res, next) => {
@@ -113,6 +151,19 @@ exports.getProducts = (req, res, next) => {
 exports.postDeteleProduct = (req, res, next) => {
 
     const prodId = req.body.productId;
-    Product.deleteById(prodId);
-    res.redirect("/admin/products");
+
+    Product.findByPk(prodId)
+    .then((product) => {
+
+        return product.destroy();
+    })
+    .then(result => {
+        res.redirect("/admin/products");
+    })
+    .catch(err => {
+        console.log("Database error - Delete product has failed", err);
+    });
+
+   /*  Product.deleteById(prodId);
+    res.redirect("/admin/products"); */
 };
