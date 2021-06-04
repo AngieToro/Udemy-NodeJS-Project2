@@ -1,7 +1,5 @@
 const database = require('../util/databaseMySQL');
 
-const Cart = require('./cart');
-
 module.exports = class Product {
 
     constructor(id, title, imageUrl, description, price) {

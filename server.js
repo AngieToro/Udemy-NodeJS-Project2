@@ -11,6 +11,8 @@ const { deleteById } = require('./models/productsMySQL');
 const sequelize = require('./util/database');
 const Product = require('./models/products');
 const User = require('./models/user');
+const Cart = require('./models/cart');
+const CartItem = require('./models/cart-item');
 
 const appExpress = express();
 
@@ -54,14 +56,19 @@ appExpress.use(errorController.get404Error);
 //Sequelize
 Product.belongsTo(User, { constraints: true, onDelete: 'CASCADE' }); //user who create the product 
 User.hasMany(Product);
+User.hasOne(Cart);
+Cart.belongsTo(User);
+Cart.belongsToMany(Product, { through: CartItem });
+Product.belongsToMany(Cart, { through: CartItem });
 //sync with the database
-//.sync({force: true}) //force true can to recreate the tables with the relationships
+//sequelize.sync({force: true}) //force true can to recreate the tables with the relationships
 sequelize.sync()
         .then(result => {
 
            return User.findByPk(1);
         })
         .then(user => {
+
             if (!user){
 
                 return User.create({ name: 'Angelica', email: 'test@test.com'});
@@ -69,6 +76,11 @@ sequelize.sync()
             return user;
         })
         .then(user => {
+
+            return user.createCart();
+        })
+        .then(cart => {
+            
             appExpress.listen(3000);
         })
         .catch(err => {

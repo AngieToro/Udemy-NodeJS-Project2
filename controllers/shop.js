@@ -1,5 +1,6 @@
 //const Product = require('../models/productsMySQL');
 const Product = require('../models/products');
+//const Cart = require('../models/cartMySQL');
 const Cart = require('../models/cart');
 
 exports.getProducts = (req, res, next) => {
@@ -110,9 +111,43 @@ exports.getIndex = (req, res, next) => {
             }); */
 };
 
+exports.postDeleteProductCart = (req, res, next) => {
+
+    const prodId = req.body.productId;
+
+    Product.findProductById(prodId, product => {
+
+        Cart.deleteProductCart(prodId, product.price);
+        res.redirect('/cart');
+    });
+};
+
 exports.getCart = (req, res, next) => {
 
-    Cart.getProductsCart(cart => {
+    req.user.getCart()
+            .then(cart => {
+
+                return cart.getProducts()
+                        .then(products => {
+
+                            res.render('shop/cart', 
+                            {
+                                docTitle: 'Your cart',
+                                path: '/cart',
+                                products: products
+                            });
+                        })
+                        .catch(err => {
+            
+                            console.log("Database error - Products in Cart not found", err);
+                        });
+            })
+            .catch(err => {
+            
+                console.log("Database error - Cart not found", err);
+            });
+
+   /*  Cart.getProductsCart(cart => {
         Product.fetchAllProducts(products => {
 
             const cartProducts = [];
@@ -133,16 +168,56 @@ exports.getCart = (req, res, next) => {
                 products: cartProducts
             });
         });
-    });
+    }); */
 };
 
 exports.postCart = (req, res, next) => {
 
-    const prodId = req.body.productId;  //name input on the body 
-    Product.findProductById(prodId, (product) => {
+    const prodId = req.body.productId;  //name input on the body
+    let fetchedCart; 
+    let newQuantity = 1;
+
+    req.user.getCart()
+            .then(cart => {
+
+                fetchedCart = cart;
+                return cart.getProducts({ where: { id: prodId } });
+            })
+            .then(products => {
+
+                let product;
+                if (products.length > 0){
+
+                    product = products[0];
+                }
+                
+                if (product){
+                    
+                    const oldQuantity = product.cartItem.quantity;
+                    newQuantity = oldQuantity + 1;
+                    return product;
+                }
+
+                return Product.findByPk(prodId);
+            })
+            .then(product => {
+
+                return fetchedCart.addProduct(product, {
+                    through: { quantity: newQuantity }
+                });
+            })
+            .then(() => {
+                res.redirect('/cart');
+            })
+            .catch(err => {
+
+                console.log("Error database - The product was not possible added to the cart");
+            });
+
+    /* Product.findProductById(prodId, (product) => {
         Cart.addProudctCart(prodId, product.price);
     });
-    res.redirect('/cart');
+    res.redirect('/cartOld'); */
 };
 
 exports.getChekout = (req, res, next) => {
@@ -160,16 +235,5 @@ exports.getOrders = (req, res, next) => {
     {
         docTitle: 'Your orders',
         path: '/orders'
-    });
-};
-
-exports.postDeleteProductCart = (req, res, next) => {
-
-    const prodId = req.body.productId;
-
-    Product.findProductById(prodId, product => {
-
-        Cart.deleteProductCart(prodId, product.price);
-        res.redirect('/cart');
     });
 };
