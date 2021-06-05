@@ -11,7 +11,7 @@ You can:
 * Add a product in the Cart
 * Delete a product in the Cart 
 
-The data store is in SQL Data Base
+The data store is in SQL Data Base (MySQL - Sequelize)
 
 ### Install
 `npm install`
