@@ -1,7 +1,6 @@
 //const Product = require('../models/productsMySQL');
 const Product = require('../models/products');
 //const Cart = require('../models/cartMySQL');
-const Cart = require('../models/cart');
 
 exports.getProducts = (req, res, next) => {
 
@@ -115,11 +114,28 @@ exports.postDeleteProductCart = (req, res, next) => {
 
     const prodId = req.body.productId;
 
-    Product.findProductById(prodId, product => {
+    req.user.getCart()
+            .then(cart => {
+                return cart.getProducts({ where: { id:prodId } });
+            })
+            .then(products => {
+
+                const product = products[0];
+                return product.cartItem.destroy();
+            })
+            .then(result => {
+
+                res.redirect('/cart');
+            })
+            .catch(err => {
+                console.log("Database error - The product cannot be deleted");
+            });
+
+    /* Product.findProductById(prodId, product => {
 
         Cart.deleteProductCart(prodId, product.price);
         res.redirect('/cart');
-    });
+    }); */
 };
 
 exports.getCart = (req, res, next) => {
@@ -220,20 +236,59 @@ exports.postCart = (req, res, next) => {
     res.redirect('/cartOld'); */
 };
 
-exports.getChekout = (req, res, next) => {
+exports.postOrder = (req, res, next) => {
 
-    res.render('shop/checkout', 
-    {
-        docTitle: 'Checkout',
-        path: '/checkout'
-    });
+    let productList;
+    let fetchedCart;
+
+    req.user.getCart()
+            .then(cart => {
+                
+                fetchedCart = cart;
+                return cart.getProducts(); 
+            })
+            .then(products => {
+
+                productList = products;
+                return req.user.createOrder();
+            })
+            .then(order => {
+
+                order.addProducts(productList.map(product => {
+                    //orderItem the name in the model
+                    product.orderItem = { quantity: product.cartItem.quantity };
+                    return product;
+                }));
+            })
+            .then(() => {
+
+                return fetchedCart.setProducts(null); 
+            })
+            .then(() => {
+
+                res.redirect('/orders');
+            })
+            .catch(err => {
+
+                console.log("Database error - The order failed", err);
+            });
 };
 
 exports.getOrders = (req, res, next) => {
 
-    res.render('shop/orders', 
-    {
-        docTitle: 'Your orders',
-        path: '/orders'
-    });
+    req.user.getOrders({ include: ['products'] })   //products the name in the model
+            .then(orders => {
+
+                res.render('shop/orders', 
+                {
+                    docTitle: 'Your orders',
+                    path: '/orders',
+                    orders: orders
+                });
+            })
+            .catch(err => {
+                
+                console.log("Database error - Orders not found", err);
+            });
 };
+
